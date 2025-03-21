@@ -1,6 +1,6 @@
 # Tic Tac Toe Game
 
-A modern web application for playing Tic Tac Toe against an AI opponent.
+A modern web application for playing Tic Tac Toe against an AI opponent. This project demonstrates a full-stack web application using Next.js, React, TypeScript, Tailwind CSS, and Prisma with SQLite.
 
 ## Tech Stack
 
