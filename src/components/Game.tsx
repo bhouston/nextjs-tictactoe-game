@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Board as BoardType, GameState, Player } from '@/lib/types';
 import Board from './Board';
 import GameStatus from './GameStatus';
+import { getUserSession } from '@/lib/user-session';
 import { 
   WINNING_COMBINATIONS,
   checkWinner, 
@@ -15,6 +17,9 @@ import {
 } from '@/lib/game-utils';
 
 export default function Game() {
+  const router = useRouter();
+  const [userId, setUserId] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [gameState, setGameState] = useState<GameState>(() => {
     // Randomly decide who goes first
     const userPlayer = Math.random() < 0.5 ? 'X' : 'O';
@@ -39,6 +44,44 @@ export default function Game() {
   );
 
   const [winningCombo, setWinningCombo] = useState<number[] | null>(null);
+
+  // Get user ID from session on component mount
+  useEffect(() => {
+    const currentUserId = getUserSession();
+    
+    if (!currentUserId) {
+      // Redirect to welcome page if no user ID is found
+      router.push('/welcome');
+      return;
+    }
+    
+    setUserId(currentUserId);
+  }, [router]);
+
+  // Save game result to database
+  const saveGameResult = async (result: 'win' | 'loss' | 'draw') => {
+    if (!userId) return;
+    
+    try {
+      const response = await fetch('/api/games', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, result }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to save game result');
+      }
+      
+      setSaveError(null);
+    } catch (error) {
+      console.error('Error saving game result:', error);
+      setSaveError(error instanceof Error ? error.message : 'Failed to save game result');
+    }
+  };
 
   // Handle AI moves
   useEffect(() => {
@@ -87,6 +130,10 @@ export default function Game() {
         winner,
         isAITurn: false,
       });
+      
+      // Save game result
+      const result = winner === userPlayer ? 'win' : 'loss';
+      saveGameResult(result);
       return;
     }
 
@@ -98,6 +145,9 @@ export default function Game() {
         winner: null,
         isAITurn: false,
       });
+      
+      // Save draw result
+      saveGameResult('draw');
       return;
     }
 
@@ -161,12 +211,32 @@ export default function Game() {
       />
       
       {(gameState.status === 'won' || gameState.status === 'draw') && (
-        <button
-          onClick={resetGame}
-          className="mt-6 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
-        >
-          Play Again
-        </button>
+        <div className="mt-6 flex flex-col sm:flex-row gap-4">
+          <button
+            onClick={resetGame}
+            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+          >
+            Play Again
+          </button>
+          <button
+            onClick={() => router.push('/history')}
+            className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"
+          >
+            View History
+          </button>
+          <button
+            onClick={() => router.push('/leaderboard')}
+            className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
+          >
+            Leaderboard
+          </button>
+        </div>
+      )}
+      
+      {saveError && (
+        <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-md">
+          {saveError}
+        </div>
       )}
     </div>
   );

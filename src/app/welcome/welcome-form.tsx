@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { saveUserSession } from '@/lib/user-session';
 
 export default function WelcomeForm() {
   const router = useRouter();
@@ -48,6 +49,13 @@ export default function WelcomeForm() {
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to save user data');
+      }
+      
+      const data = await response.json();
+      
+      // Save user ID to session storage
+      if (data.userId) {
+        saveUserSession(data.userId);
       }
       
       // Redirect to game page after successful submission
