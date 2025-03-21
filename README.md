@@ -59,9 +59,23 @@ npm test
 ## Project Structure
 
 - `/src/app` - Next.js app router pages and layouts
+  - `/src/app/welcome` - Welcome page with user registration form
+  - `/src/app/game` - Game page (to be implemented)
+  - `/src/app/api` - API routes for data operations
 - `/src/components` - React components
 - `/src/lib` - Utility functions and shared logic
 - `/prisma` - Database schema and migrations
+
+## Implementation Details
+
+### Welcome Page
+
+The welcome page (`/welcome`) includes:
+- A form to collect user name and email
+- Client-side validation for required fields and email format
+- Server-side validation and error handling
+- User creation or update in the database
+- Redirect to the game page after successful registration
 
 ## License
 
